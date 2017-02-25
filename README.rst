@@ -24,15 +24,15 @@ Dataflow-style:
 .. code-block:: python
 
     from tinyflow.pipeline import Pipeline
-    import tinyflow.transform as t
+    from tinyflow import ops
 
 
     p = Pipeline() \
-        | "Split line into words" >> t.Map(lambda x: x.lower().split()) \
-        | "Create stream of words" >> t.Wrap(it.chain.from_iterable) \
-        | "Remove empty lines" >> t.Filter(bool) \
-        | "Count words and grab top 5" >> t.Wrap(lambda x: Counter(x).most_common(5)) \
-        | "Sort by frequency desc" >> t.Sort(lambda x: x[1], reverse=True)
+        | "Split line into words" >> ops.Map(lambda x: x.lower().split()) \
+        | "Create stream of words" >> ops.Wrap(it.chain.from_iterable) \
+        | "Remove empty lines" >> ops.Filter(bool) \
+        | "Count words and grab top 5" >> ops.Wrap(lambda x: Counter(x).most_common(5)) \
+        | "Sort by frequency desc" >> ops.Sort(lambda x: x[1], reverse=True)
 
     with open('LICENSE.txt') as f:
         results = dict(p(f))
@@ -43,16 +43,16 @@ MapReduce-style:
 .. code-block:: python
 
     from tinyflow.pipeline import Pipeline
-    import tinyflow.transform as t
+    from tinyflow import ops
 
     p = Pipeline() \
-        | "Split lines into words" >> t.Map(lambda x: x.lower().split()) \
-        | "Create a stream of words" >> t.Wrap(it.chain.from_iterable) \
-        | "Create a key/val pair" >> t.Map(lambda x: (x, 1)) \
-        | "Filter to optimize sort" >> t.Filter(lambda x: x[1] > 1) \
-        | "Compute word frequency" >> t.ReduceByKey(op.iadd) \
-        | "Sort by frequency desc" >> t.Sort(lambda x: x[1]) \
-        | "Grab top 10" >> t.Wrap(lambda x: it.islice(x, 5))
+        | "Split lines into words" >> ops.Map(lambda x: x.lower().split()) \
+        | "Create a stream of words" >> ops.Wrap(it.chain.from_iterable) \
+        | "Create a key/val pair" >> ops.Map(lambda x: (x, 1)) \
+        | "Filter to optimize sort" >> ops.Filter(lambda x: x[1] > 1) \
+        | "Compute word frequency" >> ops.ReduceByKey(op.iadd) \
+        | "Sort by frequency desc" >> ops.Sort(lambda x: x[1]) \
+        | "Grab top 10" >> ops.Wrap(lambda x: it.islice(x, 5))
 
     with open('LICENSE.txt') as f:
         results = dict(p(f))
