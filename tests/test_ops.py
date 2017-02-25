@@ -21,13 +21,13 @@ def test_description():
 
 def test_Filter():
     values = [0, 1, 2, None, 4]
-    tform = ops.Filter(bool)
+    tform = ops.filter(bool)
     assert (1, 2, 4) == tuple(tform(values))
 
 
 def test_Map():
     values = tuple(range(5))
-    tform = ops.Map(lambda x: x ** 2)
+    tform = ops.map(lambda x: x ** 2)
     assert tuple(map(lambda x: x ** 2, values)) == tuple(tform(values))
 
 
@@ -44,14 +44,14 @@ def test_ReduceByKey():
         'key2': 1,
         'other': 1
     }
-    tform = ops.ReduceByKey(op.iadd)
+    tform = ops.reduce_by_key(op.iadd)
     assert expected == dict(tform(data))
 
 
 @pytest.mark.parametrize("reverse", [True, False])
 def test_Sort(reverse):
     values = tuple(enumerate(range(10)))
-    tform = ops.Sort(key=lambda x: x[1], reverse=reverse)
+    tform = ops.sort(key=lambda x: x[1], reverse=reverse)
 
     expected = tuple(sorted(values, key=lambda x: x[1], reverse=reverse))
     actual = tuple(tform(values))
@@ -61,7 +61,7 @@ def test_Sort(reverse):
 
 def test_Wrap(text):
 
-    tform = ops.Wrap(it.chain.from_iterable)
+    tform = ops.wrap(it.chain.from_iterable)
 
     expected = (line.split() for line in text.splitlines())
     expected = it.chain.from_iterable(expected)
@@ -74,6 +74,6 @@ def test_Wrap(text):
 
 
 def test_Operation_abc():
-    tform = ops.Operation()
+    o = ops.Operation()
     with pytest.raises(NotImplementedError):
-        tform([])
+        o([])

@@ -1,9 +1,13 @@
 import abc
-from collections import Counter, defaultdict, deque
+from collections import defaultdict, deque
 from functools import reduce
 
 
-__all__ = ['Operation', 'Map', 'Wrap', 'ReduceByKey', 'Sort', 'Filter']
+__all__ = ['Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter']
+
+
+builtin_map = map
+builtin_filter = filter
 
 
 class Operation(object):
@@ -55,7 +59,7 @@ class Operation(object):
         return self
 
 
-class Map(Operation):
+class map(Operation):
 
     """Map a function across the stream of data."""
 
@@ -71,10 +75,10 @@ class Map(Operation):
         self.func = func
 
     def __call__(self, stream):
-        yield from map(self.func, stream)
+        return builtin_map(self.func, stream)
 
 
-class Wrap(Operation):
+class wrap(Operation):
 
     """Wrap the data stream in an arbitrary transform.
 
@@ -98,7 +102,7 @@ class Wrap(Operation):
         return self.func(stream)
 
 
-class ReduceByKey(Operation):
+class reduce_by_key(Operation):
 
     """Partition the data stream by key and reduce each partition to a single
     value.  Expects data to be a stream like:
@@ -144,7 +148,7 @@ class ReduceByKey(Operation):
             (k, reduce(self.func, v)) for k, v in partitioned.items())
 
 
-class Sort(Operation):
+class sort(Operation):
 
     """Sort the stream of data.  Just a wrapper around ``sorted()``."""
 
@@ -163,7 +167,7 @@ class Sort(Operation):
         return sorted(stream, **self.kwargs)
 
 
-class Filter(Operation):
+class filter(Operation):
 
     """Filter the data stream.  Keeps elements that evaluate as ``True``."""
 
@@ -179,4 +183,4 @@ class Filter(Operation):
         self.func = func
 
     def __call__(self, stream):
-        yield from filter(self.func, stream)
+        return builtin_filter(self.func, stream)

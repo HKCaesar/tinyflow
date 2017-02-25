@@ -49,7 +49,7 @@ def text():
 @pytest.fixture(scope='module')
 def wordcount_opss():
     return [
-        ops.Map(lambda x: x.lower().split()),
-        ops.Wrap(it.chain.from_iterable),
-        ops.Wrap(lambda x: Counter(x).most_common(5)),
-        ops.Sort(key=lambda x: x[1], reverse=True)]
+        ops.map(lambda x: x.lower().split()),
+        ops.wrap(it.chain.from_iterable),
+        ops.wrap(lambda x: Counter(x).most_common(5)),
+        ops.sort(key=lambda x: x[1], reverse=True)]
