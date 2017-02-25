@@ -1,7 +1,6 @@
 """Tests for ``tinyflow.ops``."""
 
 
-import itertools as it
 import operator as op
 
 from tinyflow import ops
@@ -43,6 +42,7 @@ def test_Operation_abc():
 
 
 @pytest.mark.parametrize("operation,input_data,expected", [
+    (ops.itemgetter(0), (('something', None), ('none', 'else')), ('something', 'none')),
     (ops.drop(2), range(5), (2, 3, 4)),
     (ops.take(2), range(5), (0, 1)),
     (ops.flatmap(lambda x: x.upper()), ['w1', 'w2'], ['W', '1', 'W', '2']),

@@ -2,11 +2,12 @@ import abc
 from collections import defaultdict, deque
 from functools import reduce
 import itertools as it
+import operator as op
 
 
 __all__ = [
     'Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter', 'flatten'
-    'take']
+    'take', 'drop', 'itemgetter']
 
 
 builtin_map = map
@@ -249,3 +250,24 @@ class drop(Operation):
         for _ in range(self.count):
             next(stream)
         return stream
+
+
+class itemgetter(Operation):
+
+    """Like ``itertools.itemgetter()``."""
+
+    def __init__(self, *args, **kwargs):
+
+        """
+        Parameters
+        ----------
+        args : *args
+            For ``operator.itemgetter()``.
+        kwargs : **kwargs
+            For ``operator.itemgetter()``.
+        """
+
+        self.getter = op.itemgetter(*args, **kwargs)
+
+    def __call__(self, stream):
+        return builtin_map(self.getter, stream)
