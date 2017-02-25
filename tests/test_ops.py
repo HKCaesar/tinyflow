@@ -19,7 +19,7 @@ def test_description():
     assert tform.description == 'description'
 
 
-def test_ReduceByKey():
+def test_reduce_by_key():
 
     data = [
         ('key', 1),
@@ -37,7 +37,7 @@ def test_ReduceByKey():
 
 
 @pytest.mark.parametrize("reverse", [True, False])
-def test_Sort(reverse):
+def test_sort(reverse):
     values = tuple(enumerate(range(10)))
     tform = ops.sort(key=lambda x: x[1], reverse=reverse)
 
@@ -47,7 +47,7 @@ def test_Sort(reverse):
     assert expected == actual
 
 
-def test_Wrap(text):
+def test_wrap(text):
 
     tform = ops.wrap(it.chain.from_iterable)
 
