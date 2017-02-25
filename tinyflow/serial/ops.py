@@ -1,5 +1,5 @@
 import abc
-from collections import defaultdict, deque
+from collections import Counter, defaultdict, deque
 from functools import reduce
 import itertools as it
 import operator as op
@@ -10,7 +10,7 @@ from tinyflow import tools
 __all__ = [
     'Operation', 'map', 'wrap', 'sort', 'filter',
     'flatten' 'take', 'drop', 'itemgetter', 'windowed_op',
-    'windowed_reduce', 'flatmap']
+    'windowed_reduce', 'flatmap', 'counter']
 
 
 builtin_map = map
@@ -126,20 +126,22 @@ class sort(Operation):
 
     """Sort the stream of data.  Just a wrapper around ``sorted()``."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, key=None, reverse=False):
 
         """
         Parameters
         ----------
-        kwargs : **kwargs
-            Keyword arguments for ``sorted()``.
+        key : callable or None, optional
+            Key function for ``sorted()``.
+        reverse : bool, optional
+            For ``sorted()``.
         """
 
-        self.args = args
-        self.kwargs = kwargs
+        self.key = key
+        self.reverse = reverse
 
     def __call__(self, stream):
-        return sorted(stream, *self.args, **self.kwargs)
+        return sorted(stream, key=self.key, reverse=self.reverse)
 
 
 class filter(Operation):
@@ -278,3 +280,27 @@ class windowed_reduce(Operation):
     def __call__(self, stream):
         for window in tools.slicer(stream, self.count):
             yield reduce(self.reducer, window)
+
+
+class counter(Operation):
+
+    """Count items and optionally produce only the N most common."""
+
+    def __init__(self, most_common=None):
+
+        """
+        Parameters
+        ----------
+        most_common : int or None, optional
+            Only emit the N most common items.
+        """
+
+        self.most_common = most_common
+
+    def __call__(self, stream):
+        frequency = Counter(stream)
+        if self.most_common:
+            results = frequency.most_common(self.most_common)
+        else:
+            results = frequency.items()
+        return iter(results)

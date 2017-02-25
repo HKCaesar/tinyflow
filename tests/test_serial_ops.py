@@ -1,7 +1,6 @@
 """Tests for ``tinyflow.ops``."""
 
 
-import copy
 import operator as op
 
 from tinyflow.serial import ops
@@ -27,6 +26,7 @@ def test_Operation_abc():
 
 @pytest.mark.parametrize("operation,input_data,expected", [
     (ops.itemgetter(0), (('something', None), ('none', 'else')), ('something', 'none')),
+    (ops.counter(3), (1, 1, 2, 2, 4, 4, 5), ((1, 2), (2, 2), (4, 2))),
     (ops.drop(2), range(5), (2, 3, 4)),
     (ops.take(2), range(5), (0, 1)),
     (ops.map(lambda x: x ** 2), (2, 4, 8), (4, 16, 64)),
