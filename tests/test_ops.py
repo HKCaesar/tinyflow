@@ -45,10 +45,13 @@ def test_Operation_abc():
     (ops.itemgetter(0), (('something', None), ('none', 'else')), ('something', 'none')),
     (ops.drop(2), range(5), (2, 3, 4)),
     (ops.take(2), range(5), (0, 1)),
-    (ops.flatmap(lambda x: x.upper()), ['w1', 'w2'], ['W', '1', 'W', '2']),
     (ops.map(lambda x: x ** 2), (2, 4, 8), (4, 16, 64)),
+    (ops.flatmap(lambda x: x.upper()), ['w1', 'w2'], ['W', '1', 'W', '2']),
+    (ops.flatten(), ((1, 2), (3, 4)), (1, 2, 3, 4)),
     (ops.filter(bool), (0, 1, 2, None, 4), (1, 2, 4)),
     (ops.wrap(reversed), (1, 2, 3), (3, 2, 1)),
+    (ops.windowed_reduce(2, op.iadd), (1, 2, 3, 4, 5), (3, 7, 5)),
+    (ops.windowed_op(2, reversed), (1, 2, 3, 4, 5), (2, 1, 4, 3, 5)),
     (ops.sort(), (2, 3, 1), (1, 2, 3)),
     (ops.sort(reverse=True), (2, 3, 1), (3, 2, 1)),
     # Complex sorting with a key function and reversed.  Data is a series
@@ -64,4 +67,5 @@ def test_basic_operation(operation, input_data, expected):
     altered output.  Output and expected values are compared as tuples.
     """
 
+    assert isinstance(operation, ops.Operation)
     assert tuple(operation(input_data)) == tuple(expected)

@@ -4,10 +4,13 @@ from functools import reduce
 import itertools as it
 import operator as op
 
+from tinyflow import tools
+
 
 __all__ = [
-    'Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter', 'flatten'
-    'take', 'drop', 'itemgetter']
+    'Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter',
+    'flatten' 'take', 'drop', 'itemgetter', 'windowed_op',
+    'windowed_reduce', 'flatmap']
 
 
 builtin_map = map
@@ -271,3 +274,52 @@ class itemgetter(Operation):
 
     def __call__(self, stream):
         return builtin_map(self.getter, stream)
+
+
+class windowed_op(Operation):
+
+    """Windowed operations.  Group ``count`` items and hand off to
+    ``operation``.  Items are yielded from ``operation`` individually
+    back into the stream.
+    """
+
+    def __init__(self, count, operation):
+
+        """
+        Parameters
+        ----------
+        count : int
+            Apply ``operation`` across a group of ``count`` items.
+        operation : callable
+            Apply this function to groups of items.
+        """
+
+        self.count = count
+        self.operation = operation
+
+    def __call__(self, stream):
+        for window in tools.slicer(stream, self.count):
+            yield from self.operation(window)
+
+
+class windowed_reduce(Operation):
+
+    """Group N items together into a window and reduce to a single value."""
+
+    def __init__(self, count, reducer):
+
+        """
+        Parameters
+        ----------
+        count : int
+            Window size.
+        reducer : function
+            Like ``operator.iadd()``.
+        """
+
+        self.count = count
+        self.reducer = reducer
+
+    def __call__(self, stream):
+        for window in tools.slicer(stream, self.count):
+            yield reduce(self.reducer, window)
