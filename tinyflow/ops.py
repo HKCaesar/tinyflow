@@ -1,13 +1,21 @@
 import abc
 from collections import defaultdict, deque
 from functools import reduce
+import itertools as it
 
 
-__all__ = ['Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter']
+__all__ = [
+    'Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter', 'flatten'
+    'take']
 
 
 builtin_map = map
 builtin_filter = filter
+
+
+class _NULL(object):
+
+    """A sentinel for when ``None`` is a valid value or default."""
 
 
 class Operation(object):
@@ -76,6 +84,14 @@ class map(Operation):
 
     def __call__(self, stream):
         return builtin_map(self.func, stream)
+
+
+class flatmap(map):
+
+    """Like: ``map(func) | flatten()``."""
+
+    def __call__(self, stream):
+        return it.chain.from_iterable(super().__call__(stream))
 
 
 class wrap(Operation):
@@ -184,3 +200,52 @@ class filter(Operation):
 
     def __call__(self, stream):
         return builtin_filter(self.func, stream)
+
+
+class flatten(Operation):
+
+    """Flatten an iterable.  Like ``itertools.chain.from_iterable()``."""
+
+    def __call__(self, stream):
+        return it.chain.from_iterable(stream)
+
+
+class take(Operation):
+
+    """Take N items from the stream."""
+
+    def __init__(self, count):
+
+        """
+        Parameters
+        ----------
+        count : int
+            Take this many items.
+        """
+
+        self.count = count
+
+    def __call__(self, stream):
+        return it.islice(stream, self.count)
+
+
+class drop(Operation):
+
+    """Drop N items from the stream."""
+
+    def __init__(self, count):
+
+        """
+        Parameters
+        ----------
+        count : int
+            Drop this many items.
+        """
+
+        self.count = count
+
+    def __call__(self, stream):
+        stream = iter(stream)
+        for _ in range(self.count):
+            next(stream)
+        return stream
