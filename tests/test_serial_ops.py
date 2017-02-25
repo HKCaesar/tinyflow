@@ -3,7 +3,7 @@
 
 import operator as op
 
-from tinyflow import ops
+from tinyflow.serial import ops
 
 import pytest
 

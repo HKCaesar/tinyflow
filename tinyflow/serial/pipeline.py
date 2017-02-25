@@ -1,7 +1,7 @@
 """Pipeline model."""
 
 
-from .exceptions import ensure_operation
+from ..exceptions import ensure_operation
 
 
 class Pipeline(object):
