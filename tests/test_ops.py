@@ -36,31 +36,6 @@ def test_reduce_by_key():
     assert expected == dict(tform(data))
 
 
-@pytest.mark.parametrize("reverse", [True, False])
-def test_sort(reverse):
-    values = tuple(enumerate(range(10)))
-    tform = ops.sort(key=lambda x: x[1], reverse=reverse)
-
-    expected = tuple(sorted(values, key=lambda x: x[1], reverse=reverse))
-    actual = tuple(tform(values))
-
-    assert expected == actual
-
-
-def test_wrap(text):
-
-    tform = ops.wrap(it.chain.from_iterable)
-
-    expected = (line.split() for line in text.splitlines())
-    expected = it.chain.from_iterable(expected)
-
-    actual = (line.split() for line in text.splitlines())
-    actual = tform(actual)
-
-    for e, a in zip(expected, actual):
-        assert e == a
-
-
 def test_Operation_abc():
     o = ops.Operation()
     with pytest.raises(NotImplementedError):
@@ -72,8 +47,17 @@ def test_Operation_abc():
     (ops.take(2), range(5), (0, 1)),
     (ops.flatmap(lambda x: x.upper()), ['w1', 'w2'], ['W', '1', 'W', '2']),
     (ops.map(lambda x: x ** 2), (2, 4, 8), (4, 16, 64)),
-    (ops.filter(bool), (0, 1, 2, None, 4), (1, 2, 4))
-])
+    (ops.filter(bool), (0, 1, 2, None, 4), (1, 2, 4)),
+    (ops.wrap(reversed), (1, 2, 3), (3, 2, 1)),
+    (ops.sort(), (2, 3, 1), (1, 2, 3)),
+    (ops.sort(reverse=True), (2, 3, 1), (3, 2, 1)),
+    # Complex sorting with a key function and reversed.  Data is a series
+    # of tuples.  Sort on the first element of each tuple.
+    (
+        ops.sort(key=op.itemgetter(0), reverse=True),
+        ((1, 'dog'), (3, 'cat'), (2, 'fish')),
+        ((3, 'cat'), (2, 'fish'), (1, 'dog')))
+    ])
 def test_basic_operation(operation, input_data, expected):
 
     """A lot of operations take few arguments are generate an only slightly
