@@ -1,7 +1,7 @@
 """Pipeline model."""
 
 
-from .errors import ensure_transform
+from .exceptions import ensure_operation
 
 
 class Pipeline(object):
@@ -15,7 +15,7 @@ class Pipeline(object):
 
         """Add a transform to the pipeline."""
 
-        self.transforms.append(ensure_transform(other))
+        self.transforms.append(ensure_operation(other))
         return self
 
     __ior__ = __or__

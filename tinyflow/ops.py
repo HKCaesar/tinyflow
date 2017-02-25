@@ -1,12 +1,16 @@
 import abc
-from collections import Counter, defaultdict, deque
+from collections import defaultdict, deque
 from functools import reduce
 
 
-__all__ = ['Transform', 'Map', 'Wrap', 'ReduceByKey', 'Sort', 'Filter']
+__all__ = ['Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter']
 
 
-class Transform(object):
+builtin_map = map
+builtin_filter = filter
+
+
+class Operation(object):
 
     """Base class for developing pipeline steps."""
 
@@ -15,7 +19,7 @@ class Transform(object):
 
         """A transform description can be added like:
 
-            Pipeline() | "description" >> Transform()
+            Pipeline() | "description" >> Operation()
         """
 
         return getattr(self, '_description', repr(self))
@@ -42,7 +46,7 @@ class Transform(object):
         Yields
         ------
         object
-            Transformed objects.
+            Operationed objects.
         """
 
         raise NotImplementedError
@@ -55,7 +59,7 @@ class Transform(object):
         return self
 
 
-class Map(Transform):
+class map(Operation):
 
     """Map a function across the stream of data."""
 
@@ -71,10 +75,10 @@ class Map(Transform):
         self.func = func
 
     def __call__(self, stream):
-        yield from map(self.func, stream)
+        return builtin_map(self.func, stream)
 
 
-class Wrap(Transform):
+class wrap(Operation):
 
     """Wrap the data stream in an arbitrary transform.
 
@@ -98,7 +102,7 @@ class Wrap(Transform):
         return self.func(stream)
 
 
-class ReduceByKey(Transform):
+class reduce_by_key(Operation):
 
     """Partition the data stream by key and reduce each partition to a single
     value.  Expects data to be a stream like:
@@ -144,7 +148,7 @@ class ReduceByKey(Transform):
             (k, reduce(self.func, v)) for k, v in partitioned.items())
 
 
-class Sort(Transform):
+class sort(Operation):
 
     """Sort the stream of data.  Just a wrapper around ``sorted()``."""
 
@@ -163,7 +167,7 @@ class Sort(Transform):
         return sorted(stream, **self.kwargs)
 
 
-class Filter(Transform):
+class filter(Operation):
 
     """Filter the data stream.  Keeps elements that evaluate as ``True``."""
 
@@ -179,4 +183,4 @@ class Filter(Transform):
         self.func = func
 
     def __call__(self, stream):
-        yield from filter(self.func, stream)
+        return builtin_filter(self.func, stream)

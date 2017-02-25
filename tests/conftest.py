@@ -7,8 +7,7 @@ import textwrap
 
 import pytest
 
-from tinyflow.pipeline import Pipeline
-import tinyflow.transform as t
+from tinyflow import ops
 
 
 @pytest.fixture(scope='module')
@@ -48,10 +47,9 @@ def text():
 
 
 @pytest.fixture(scope='module')
-def wordcount_transforms():
+def wordcount_opss():
     return [
-        t.Map(lambda x: x.lower().split()),
-        t.Wrap(it.chain.from_iterable),
-        t.Wrap(lambda x: Counter(x).most_common(5)),
-        t.Sort(key=lambda x: x[1], reverse=True)
-    ]
+        ops.map(lambda x: x.lower().split()),
+        ops.wrap(it.chain.from_iterable),
+        ops.wrap(lambda x: Counter(x).most_common(5)),
+        ops.sort(key=lambda x: x[1], reverse=True)]
