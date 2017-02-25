@@ -16,7 +16,7 @@ def test_default_description():
 
 def test_description():
     tform = 'description' >> ops.Operation()
-    assert 'description' >> ops.Operation()
+    assert tform.description == 'description'
 
 
 def test_ReduceByKey():
