@@ -3,7 +3,7 @@
 
 import pytest
 
-from tinyflow.errors import NotAnOperation
+from tinyflow.exceptions import NotAnOperation
 from tinyflow.pipeline import Pipeline
 
 
