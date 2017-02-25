@@ -8,7 +8,7 @@ from tinyflow import tools
 
 
 __all__ = [
-    'Operation', 'map', 'wrap', 'reduce_by_key', 'sort', 'filter',
+    'Operation', 'map', 'wrap', 'sort', 'filter',
     'flatten' 'take', 'drop', 'itemgetter', 'windowed_op',
     'windowed_reduce', 'flatmap']
 
@@ -122,57 +122,11 @@ class wrap(Operation):
         return self.func(stream)
 
 
-class reduce_by_key(Operation):
-
-    """Partition the data stream by key and reduce each partition to a single
-    value.  Expects data to be a stream like:
-
-        (key1, value)
-        (key2, value)
-
-    This could be used in a wordcount style computation:
-
-        import itertools as it
-        import operator as op
-
-        from tinyflow.pipeline import Pipeline
-        from tinyflow import transform as t
-
-        p = Pipeline() \
-            | "Split lines into words" >> t.Map(lambda x: x.split()) \
-            | "Create a stream of words" >> t.Wrap(it.chain.from_iterable) \
-            | "Apply a value to each word" >> t.Map(lambda x: (x, 1)) \
-            | "Compute word frequency" >> t.ReduceByKey(op.iadd)
-
-        with open('file.txt') as f:
-            results = dict(p(f))
-    """
-
-    def __init__(self, func):
-
-        """
-        Parameters
-        ----------
-        func : function
-            Like ``operator.iadd()``.  Anything that fulfills the function
-            argument for ``functools.reduce()``.
-        """
-
-        self.func = func
-
-    def __call__(self, stream):
-        partitioned = defaultdict(deque)
-        for key, value in stream:
-            partitioned[key].append(value)
-        yield from (
-            (k, reduce(self.func, v)) for k, v in partitioned.items())
-
-
 class sort(Operation):
 
     """Sort the stream of data.  Just a wrapper around ``sorted()``."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
 
         """
         Parameters
@@ -181,10 +135,11 @@ class sort(Operation):
             Keyword arguments for ``sorted()``.
         """
 
+        self.args = args
         self.kwargs = kwargs
 
     def __call__(self, stream):
-        return sorted(stream, **self.kwargs)
+        return sorted(stream, *self.args, **self.kwargs)
 
 
 class filter(Operation):

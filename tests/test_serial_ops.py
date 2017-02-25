@@ -1,6 +1,7 @@
 """Tests for ``tinyflow.ops``."""
 
 
+import copy
 import operator as op
 
 from tinyflow.serial import ops
@@ -16,23 +17,6 @@ def test_default_description():
 def test_description():
     tform = 'description' >> ops.Operation()
     assert tform.description == 'description'
-
-
-def test_reduce_by_key():
-
-    data = [
-        ('key', 1),
-        ('key2', 1),
-        ('key', 1),
-        ('other', 1)
-    ]
-    expected = {
-        'key': 2,
-        'key2': 1,
-        'other': 1
-    }
-    tform = ops.reduce_by_key(op.iadd)
-    assert expected == dict(tform(data))
 
 
 def test_Operation_abc():
