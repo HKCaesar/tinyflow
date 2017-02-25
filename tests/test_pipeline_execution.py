@@ -5,17 +5,17 @@ from collections import Counter
 import itertools as it
 
 from tinyflow.pipeline import Pipeline
-import tinyflow.transform as t
+from tinyflow import ops
 
 
 def test_wordcount():
 
     p = Pipeline() \
-        | "Split line into words" >> t.Map(lambda x: x.lower().split()) \
-        | "Create stream of words" >> t.Wrap(it.chain.from_iterable) \
-        | "Count words and grab top 10" >> t.Wrap(
+        | "Split line into words" >> ops.Map(lambda x: x.lower().split()) \
+        | "Create stream of words" >> ops.Wrap(it.chain.from_iterable) \
+        | "Count words and grab top 10" >> ops.Wrap(
             lambda x: Counter(x).most_common(5)) \
-        | "Sort by frequency desc" >> t.Sort(key=lambda x: x[1], reverse=True)
+        | "Sort by frequency desc" >> ops.Sort(key=lambda x: x[1], reverse=True)
 
     with open('LICENSE.txt') as f:
         actual = dict(p(f))

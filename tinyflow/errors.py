@@ -1,18 +1,21 @@
+"""Exceptions, error handlers, and high level validators."""
+
+
 class TinyFlowException(Exception):
 
     """Base exception for ``tinyflow``."""
 
 
-class NotATransform(TinyFlowException):
+class NotAnOperation(TinyFlowException):
 
     """Raise when an object should be an instance of
-    ``tinyflow.transform.Transform()`` but isn't.
+    ``tinyflow.ops.Operation()`` but isn't.
     """
 
 
-def ensure_transform(obj):
+def ensure_operation(obj):
 
-    """Ensure an object is a ``tinyflow.transform.Transform()``.
+    """Ensure an object is a ``tinyflow.ops.Operation()``.
 
     Parameters
     ----------
@@ -21,19 +24,17 @@ def ensure_transform(obj):
 
     Raises
     ------
-    NotATransform
+    NotAOperation
 
     Returns
     -------
     obj
-
-    f"Expected a 'Transform()', not '{msg}'"
     """
 
     # Avoid a cyclic import
-    from .transform import Transform
+    from .ops import Operation
 
-    if not isinstance(obj, Transform):
-        raise NotATransform("Expected a 'Transform()', not '{}'".format(obj))
+    if not isinstance(obj, Operation):
+        raise NotAnOperation("Expected a 'Operation()', not '{}'".format(obj))
     else:
         return obj
