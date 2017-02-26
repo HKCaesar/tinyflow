@@ -10,8 +10,8 @@ from tinyflow import tools
 
 __all__ = [
     'Operation', 'map', 'wrap', 'sort', 'filter',
-    'flatten' 'take', 'drop', 'itemgetter', 'windowed_op',
-    'windowed_reduce', 'flatmap', 'counter']
+    'flatten' 'take', 'drop', 'windowed_op',
+    'windowed_reduce', 'flatmap', 'counter', 'reduce_by_key']
 
 
 builtin_map = map
@@ -211,27 +211,6 @@ class drop(Operation):
         for _ in range(self.count):
             next(stream)
         return stream
-
-
-class itemgetter(Operation):
-
-    """Like ``itertools.itemgetter()``."""
-
-    def __init__(self, *args, **kwargs):
-
-        """
-        Parameters
-        ----------
-        args : *args
-            For ``operator.itemgetter()``.
-        kwargs : **kwargs
-            For ``operator.itemgetter()``.
-        """
-
-        self.getter = op.itemgetter(*args, **kwargs)
-
-    def __call__(self, stream):
-        return builtin_map(self.getter, stream)
 
 
 class windowed_op(Operation):
