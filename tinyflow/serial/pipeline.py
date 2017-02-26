@@ -1,7 +1,8 @@
 """Pipeline model."""
 
 
-from ..exceptions import ensure_operation
+from ..exceptions import NotAnOperation
+from ..serial.ops import Operation
 
 
 class Pipeline(object):
@@ -15,7 +16,9 @@ class Pipeline(object):
 
         """Add a transform to the pipeline."""
 
-        self.transforms.append(ensure_operation(other))
+        if not isinstance(other, Operation):
+            raise NotAnOperation(f"Expected an 'Operation()', not: {other}")
+        self.transforms.append(other)
         return self
 
     __ior__ = __or__
