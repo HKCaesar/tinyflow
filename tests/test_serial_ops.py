@@ -1,10 +1,11 @@
 """Tests for ``tinyflow.ops``."""
 
 
-import collections
 import operator as op
 
 import pytest
+
+from tinyflow import tools
 from tinyflow.serial import ops
 
 
@@ -61,7 +62,7 @@ def test_reduce_by_key_exceptions():
             None, None, copy_initial=True, deepcopy_initial=True)
 
 
-@pytest.mark.parametrize('initial', [ops._NULL, 0, 10])
+@pytest.mark.parametrize('initial', [tools.NULL, 0, 10])
 def test_reduce_by_key_wordcount(initial):
 
     """Tests ``keyfunc``, ``valfunc``, and ``initial``."""
@@ -72,7 +73,7 @@ def test_reduce_by_key_wordcount(initial):
         'something': 1,
         'else': 1
     }
-    if initial != ops._NULL:
+    if initial != tools.NULL:
         expected = {k: v + initial for k, v in expected.items()}
     o = ops.reduce_by_key(
         op.iadd,

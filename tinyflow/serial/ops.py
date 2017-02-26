@@ -1,9 +1,11 @@
+"""Pipeline operations for processing data serially."""
+
+
 import abc
 from collections import Counter
 import copy
 from functools import reduce
 import itertools as it
-import operator as op
 
 from tinyflow import tools
 
@@ -16,11 +18,6 @@ __all__ = [
 
 builtin_map = map
 builtin_filter = filter
-
-
-class _NULL(object):
-
-    """A sentinel for when ``None`` is a valid value or default."""
 
 
 class Operation(object):
@@ -303,7 +300,7 @@ class reduce_by_key(Operation):
     """
 
     def __init__(
-            self, reducer, keyfunc, valfunc=lambda x: x, initial=_NULL,
+            self, reducer, keyfunc, valfunc=lambda x: x, initial=tools.NULL,
             copy_initial=False, deepcopy_initial=False):
 
         """
@@ -354,19 +351,19 @@ class reduce_by_key(Operation):
 
         for key, value in stream:
 
-            p_value = partitioned.get(key, _NULL)
+            p_value = partitioned.get(key, tools.NULL)
 
             # This key already exists.  Reduce.
-            if p_value != _NULL:
+            if p_value != tools.NULL:
                 partitioned[key] = self.reducer(p_value, value)
 
             # New key and no initial value.  Just insert the value from the
             # stream.
-            elif p_value == _NULL and self.initial == _NULL:
+            elif p_value == tools.NULL and self.initial == tools.NULL:
                 partitioned[key] = value
 
             # New key and an initial value
-            elif self.initial != _NULL:
+            elif self.initial != tools.NULL:
                 partitioned[key] = self.reducer(
                     self.copier(self.initial), value)
 
