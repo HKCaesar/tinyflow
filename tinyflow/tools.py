@@ -4,6 +4,11 @@
 import itertools as it
 
 
+class NULL(object):
+
+    """A sentinel for when ``None`` is a valid value or default."""
+
+
 def slicer(iterable, chunksize):
 
     """

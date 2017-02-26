@@ -13,28 +13,18 @@ class NotAnOperation(TinyFlowException):
     """
 
 
-def ensure_operation(obj):
+class NotACoroOperation(NotAnOperation):
 
-    """Ensure an object is a ``tinyflow.ops.Operation()``.
+    """Like ``NotAnOperation()`` but for ``tinyflow.coro.ops``."""
 
-    Parameters
-    ----------
-    obj : object
-        Ensure this is the right type.
 
-    Raises
-    ------
-    NotAOperation
+class NotACoroTarget(NotACoroOperation):
 
-    Returns
-    -------
-    obj
+    """Like ``NotACoroOperation()`` but for coroutine targets."""
+
+
+class TooManyTargets(TinyFlowException):
+
+    """Raised when a ``tinyflow.coro.CoroPipeline()`` receives too many
+    ``tinyflow.coro.ops.CoroTarget()``'s.
     """
-
-    # Avoid a cyclic import
-    from .serial.ops import Operation
-
-    if not isinstance(obj, Operation):
-        raise NotAnOperation("Expected a 'Operation()', not '{}'".format(obj))
-    else:
-        return obj
