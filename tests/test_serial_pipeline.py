@@ -1,10 +1,10 @@
-"""Tests for ``tinyflow.pipeline``."""
+"""Tests for ``tinyflow.serial.pipeline``."""
 
 
 import pytest
 
 from tinyflow.exceptions import NotAnOperation
-from tinyflow.pipeline import Pipeline
+from tinyflow.serial.pipeline import Pipeline
 
 
 def test_pipeline_exceptions():

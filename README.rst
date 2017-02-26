@@ -14,50 +14,26 @@ After some experimentation, Apache Beam's Python SDK got the API right.
 Use that instead.
 
 
-Word Count
-==========
+Standard Word Count Example
+===========================
 
 Grab the 5 most common words in ``LICENSE.txt``
-
-Dataflow-style:
 
 .. code-block:: python
 
     from collections import Counter
 
-    from tinyflow.pipeline import Pipeline
-    from tinyflow import ops
+    from tinyflow.serial import ops, Pipeline
 
 
-    p = Pipeline() \
-        | "Split line into words" >> ops.map(lambda x: x.lower().split()) \
-        | "Create stream of words" >> ops.wrap(it.chain.from_iterable) \
+    pipe = Pipeline() \
+        | "Split line into words" >> ops.flatmap(lambda x: x.lower().split()) \
         | "Remove empty lines" >> ops.filter(bool) \
-        | "Count words and grab top 5" >> ops.wrap(lambda x: Counter(x).most_common(5)) \
-        | "Sort by frequency desc" >> ops.sort(lambda x: x[1], reverse=True)
+        | "Produce the 5 most common words" >> ops.counter(5) \
+        | "Sort by frequency desc" >> ops.sort(key=lambda x: x[1], reverse=True)
 
     with open('LICENSE.txt') as f:
-        results = dict(p(f))
-
-
-MapReduce-style:
-
-.. code-block:: python
-
-    from tinyflow.pipeline import Pipeline
-    from tinyflow import ops
-
-    p = Pipeline() \
-        | "Split lines into words" >> ops.map(lambda x: x.lower().split()) \
-        | "Create a stream of words" >> ops.wrap(it.chain.from_iterable) \
-        | "Create a key/val pair" >> ops.map(lambda x: (x, 1)) \
-        | "Filter to optimize sort" >> ops.filter(lambda x: x[1] > 1) \
-        | "Compute word frequency" >> ops.reduce_by_key(op.iadd) \
-        | "Sort by frequency desc" >> ops.sort(lambda x: x[1]) \
-        | "Grab top 10" >> ops.wrap(lambda x: it.islice(x, 5))
-
-    with open('LICENSE.txt') as f:
-        results = dict(p(f))
+        results = dict(pipe(f))
 
 
 Using only Python's builtins:

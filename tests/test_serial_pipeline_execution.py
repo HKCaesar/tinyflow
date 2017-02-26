@@ -1,11 +1,11 @@
-"""Test ``tinyflow.pipeline.Pipeline()`` execution."""
+"""Test ``tinyflow.serial.pipeline.Pipeline()`` execution."""
 
 
 from collections import Counter
 import itertools as it
 
-from tinyflow.pipeline import Pipeline
-from tinyflow import ops
+from tinyflow.serial import ops
+from tinyflow.serial.pipeline import Pipeline
 
 
 def test_wordcount():

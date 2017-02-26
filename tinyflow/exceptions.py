@@ -32,7 +32,7 @@ def ensure_operation(obj):
     """
 
     # Avoid a cyclic import
-    from .ops import Operation
+    from .serial.ops import Operation
 
     if not isinstance(obj, Operation):
         raise NotAnOperation("Expected a 'Operation()', not '{}'".format(obj))
