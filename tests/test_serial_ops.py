@@ -30,7 +30,7 @@ def test_Operation_abc():
     (ops.drop(2), range(5), (2, 3, 4)),
     (ops.take(2), range(5), (0, 1)),
     (ops.map(lambda x: x ** 2), (2, 4, 8), (4, 16, 64)),
-    (ops.flatmap(lambda x: x.upper()), ['w1', 'w2'], ['W', '1', 'W', '2']),
+    (ops.map(lambda x: x.upper(), flatten=True), ['w1', 'w2'], ['W', '1', 'W', '2']),
     (ops.flatten(), ((1, 2), (3, 4)), (1, 2, 3, 4)),
     (ops.filter(bool), (0, 1, 2, None, 4), (1, 2, 4)),
     (ops.wrap(reversed), (1, 2, 3), (3, 2, 1)),

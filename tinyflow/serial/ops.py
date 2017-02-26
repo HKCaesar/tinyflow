@@ -76,27 +76,25 @@ class map(Operation):
 
     """Map a function across the stream of data."""
 
-    def __init__(self, func):
+    def __init__(self, func, flatten=False):
 
         """
         Parameters
         ----------
         func : function
             Map this function.
+        flatten : bool, optional
+            Like: ``itertools.chain.from_iterable(map(<func>, <iterable>))``.
         """
 
         self.func = func
+        self.flatten = flatten
 
     def __call__(self, stream):
-        return builtin_map(self.func, stream)
-
-
-class flatmap(map):
-
-    """Like: ``map(func) | flatten()``."""
-
-    def __call__(self, stream):
-        return it.chain.from_iterable(super().__call__(stream))
+        results = builtin_map(self.func, stream)
+        if self.flatten:
+            results = it.chain.from_iterable(results)
+        return results
 
 
 class wrap(Operation):
