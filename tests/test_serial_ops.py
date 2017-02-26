@@ -1,11 +1,11 @@
 """Tests for ``tinyflow.ops``."""
 
 
+import collections
 import operator as op
 
-from tinyflow.serial import ops
-
 import pytest
+from tinyflow.serial import ops
 
 
 def test_default_description():
@@ -53,3 +53,54 @@ def test_basic_operation(operation, input_data, expected):
 
     assert isinstance(operation, ops.Operation)
     assert tuple(operation(input_data)) == tuple(expected)
+
+
+def test_reduce_by_key_exceptions():
+    with pytest.raises(ValueError):
+        ops.reduce_by_key(
+            None, None, copy_initial=True, deepcopy_initial=True)
+
+
+@pytest.mark.parametrize('initial', [ops._NULL, 0, 10])
+def test_reduce_by_key_wordcount(initial):
+
+    """Tests ``keyfunc``, ``valfunc``, and ``initial``."""
+
+    data = ['word', 'something', 'else', 'word']
+    expected = {
+        'word': 2,
+        'something': 1,
+        'else': 1
+    }
+    if initial != ops._NULL:
+        expected = {k: v + initial for k, v in expected.items()}
+    o = ops.reduce_by_key(
+        op.iadd,
+        lambda x: x,
+        valfunc=lambda x: 1,
+        initial=initial)
+
+    assert expected == dict(o(data))
+
+
+@pytest.mark.parametrize('kwargs', (
+        {'copy_initial': True},
+        {'deepcopy_initial': True}))
+def test_reduce_by_key_initial_copier(kwargs):
+
+    data = [
+        ['key1', 1],
+        ['key', 1],
+        ['key', 2],
+    ]
+    expected = {
+        'key1': [None, 'key1', 1],
+        'key': [None, 'key', 1, 'key', 2]
+    }
+    o = ops.reduce_by_key(
+        op.iadd,
+        op.itemgetter(0),
+        initial=[None],
+        **kwargs)
+    actual = dict(o(data))
+    assert expected == actual
