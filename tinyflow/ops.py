@@ -13,7 +13,7 @@ from tinyflow import tools
 __all__ = [
     'Operation', 'map', 'wrap', 'sort', 'filter',
     'flatten' 'take', 'drop', 'windowed_op',
-    'windowed_reduce', 'flatmap', 'counter', 'reduce_by_key']
+    'windowed_reduce', 'counter', 'reduce_by_key']
 
 
 builtin_map = map
