@@ -1,6 +1,12 @@
 """Experiments in data flow programming."""
 
 
+from tinyflow.pipeline import Pipeline
+
+
+__all__ = ['Pipeline']
+
+
 __version__ = '0.1'
 __author__ = 'Kevin Wurster'
 __email__ = 'wursterk@gmail.com'

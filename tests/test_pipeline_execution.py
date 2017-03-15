@@ -4,8 +4,7 @@
 from collections import Counter
 import itertools as it
 
-from tinyflow.serial import ops
-from tinyflow.serial.pipeline import Pipeline
+from tinyflow import ops, Pipeline
 
 
 def test_wordcount():

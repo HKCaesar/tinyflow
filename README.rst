@@ -50,12 +50,6 @@ Using only Python's builtins:
         results = dict(count.most_common(10))
 
 
-Roadmap
-=======
-
-``async/await`` probably.
-
-
 Developing
 ==========
 

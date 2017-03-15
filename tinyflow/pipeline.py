@@ -1,8 +1,8 @@
 """Pipeline model."""
 
 
-from ..exceptions import NotAnOperation
-from ..serial.ops import Operation
+from .exceptions import NotAnOperation
+from .ops import Operation
 
 
 class Pipeline(object):
@@ -30,5 +30,8 @@ class Pipeline(object):
         data = iter(data)
 
         for trans in self.transforms:
-            data = trans(data)
-        yield from data
+            # Ensure downstream nodes get an ambiguous iterator and not
+            # something like a list that they get hooked on abusing.
+            data = iter(trans(data))
+        for item in data:
+            yield item

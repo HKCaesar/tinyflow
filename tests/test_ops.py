@@ -5,8 +5,7 @@ import operator as op
 
 import pytest
 
-from tinyflow import tools
-from tinyflow.serial import ops
+from tinyflow import ops, tools
 
 
 def test_default_description():
