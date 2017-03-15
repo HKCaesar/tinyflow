@@ -4,7 +4,9 @@
 from collections import Counter
 import itertools as it
 
-from tinyflow import ops, Pipeline
+import pytest
+
+from tinyflow import exceptions, ops, Pipeline
 
 
 def test_wordcount():
@@ -28,3 +30,25 @@ def test_wordcount():
     }
 
     assert expected == actual
+
+
+def test_operation_parent_pipeline():
+
+    p = Pipeline()
+
+    class O(ops.Operation):
+
+        def __init__(self, check_pipeline=False):
+            # Just referencing pipeline here will trigger an exception
+            if check_pipeline:
+                self.pipeline
+
+        def __call__(self, stream):
+            return self.pipeline is p
+
+    with pytest.raises(exceptions.NoPipeline):
+        O(check_pipeline=True)
+
+    p |= O()
+
+    assert p([None]) is True

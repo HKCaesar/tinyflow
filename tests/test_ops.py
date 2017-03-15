@@ -104,3 +104,7 @@ def test_reduce_by_key_initial_copier(kwargs):
         **kwargs)
     actual = dict(o(data))
     assert expected == actual
+
+
+# def test_parallel_map():
+#
