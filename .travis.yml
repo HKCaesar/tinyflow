@@ -5,7 +5,10 @@ sudo: false
 cache: pip
 
 python:
+  - 2.7
   - 3.6
+  - pypy
+  - pypy3
 
 install:
   - pip install pip setuptools --upgrade
