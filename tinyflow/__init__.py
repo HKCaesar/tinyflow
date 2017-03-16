@@ -1,10 +1,10 @@
 """Experiments in data flow programming."""
 
 
-from tinyflow.pipeline import Pipeline
+from .pipeline import Pipeline
 
 
-__all__ = ['Pipeline']
+__all__ = ['Pipeline', 'ops']
 
 
 __version__ = '0.1'
