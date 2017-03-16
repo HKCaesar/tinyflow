@@ -18,14 +18,6 @@ def wordcount_top5():
 
 
 @pytest.fixture(scope='module')
-def square():
-    """Returns a function behaving like ``lambda x: x ** 2`` to get around
-    ``pickle``'s limitations.
-    """
-    return _testing.square
-
-
-@pytest.fixture(scope='module')
 def add2():
     """Returns a function behaving like ``lambda a, b: a + b`` to get around
     ``pickle's`` limitations.
