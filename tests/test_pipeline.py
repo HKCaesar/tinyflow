@@ -3,8 +3,8 @@
 
 import pytest
 
+from tinyflow import Pipeline
 from tinyflow.exceptions import NotAnOperation
-from tinyflow.serial.pipeline import Pipeline
 
 
 def test_pipeline_exceptions():

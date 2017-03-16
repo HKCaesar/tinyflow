@@ -28,3 +28,17 @@ class TooManyTargets(TinyFlowException):
     """Raised when a ``tinyflow.coro.CoroPipeline()`` receives too many
     ``tinyflow.coro.ops.CoroTarget()``'s.
     """
+
+
+class NoPipeline(TinyFlowException):
+
+    """Raised when an operation has not been attached to a pipeline, but
+    requests its parent pipeline.
+    """
+
+
+class NoPool(TinyFlowException):
+
+    """Raised when a thread or process pool is requested but was not passed
+    to ``tinyflow.Pipeline()``.
+    """

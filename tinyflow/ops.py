@@ -2,22 +2,19 @@
 
 
 import abc
-from collections import Counter
+from collections import Counter, deque
 import copy
 from functools import reduce
 import itertools as it
 
-from tinyflow import tools
+from . import _compat, tools
+from .exceptions import NoPipeline
 
 
 __all__ = [
     'Operation', 'map', 'wrap', 'sort', 'filter',
     'flatten' 'take', 'drop', 'windowed_op',
-    'windowed_reduce', 'flatmap', 'counter', 'reduce_by_key']
-
-
-builtin_map = map
-builtin_filter = filter
+    'windowed_reduce', 'counter', 'reduce_by_key']
 
 
 class Operation(object):
@@ -43,8 +40,24 @@ class Operation(object):
 
         self._description = value
 
+    @property
+    def pipeline(self):
+
+        """Operation's parent pipeline."""
+
+        pipeline = getattr(self, '_pipeline', None)
+        if pipeline is None:
+            raise NoPipeline(
+                "Operation {} not attached to a pipeline.".format(repr(self)))
+        else:
+            return pipeline
+
+    @pipeline.setter
+    def pipeline(self, pipeline):
+        self._pipeline = pipeline
+
     @abc.abstractmethod
-    def __call__(self, stream):
+    def __call__(self, stream):  # pragma: no cover
 
         """Given a stream of data, apply the transform.
 
@@ -73,24 +86,120 @@ class map(Operation):
 
     """Map a function across the stream of data."""
 
-    def __init__(self, func, flatten=False):
+    def __init__(self, func, argtype='single', flatten=False, pool=None):
 
         """
         Parameters
         ----------
         func : function
             Map this function.
+        argtype : str, optional
+            Determines how items from the stream are passed to ``func``.
+                single: Like ``map(func, stream)``.
+                *args**kwargs: Like ``map(lambda x: func(*x[0], **x[1]), stream)``.
+                *args: Like ``itertools.starmap(func, stream)``.
+                **kwargs: Like ``map(lambda x: func(**x), stream)``
         flatten : bool, optional
             Like: ``itertools.chain.from_iterable(map(<func>, <iterable>))``.
+        pool : str, optional
+            Use 'thread' for thread pool or 'process' for process pool.
+            The corresponding pool must be passed to ``Pipeline.__call__()``
+            at the time of computation.
         """
 
         self.func = func
         self.flatten = flatten
+        self.queue = deque()
+
+        # Validate by calling '_compute_no_pool()' with an empty iterable,
+        # which steps through the various valid values for 'argtype' without
+        # actually doing any work.
+        self.argtype = argtype
+        self._compute_no_pool([])
+
+        self.pool = pool
+        self.worker_pool = None
+
+    def flush_queue(self, count=None):
+
+        # Dots aren't free
+        queue = self.queue
+        append = queue.append
+        popleft = queue.popleft
+
+        i = 0
+        while queue:
+            item = popleft()
+            if item.done():
+                yield item.result()
+            else:
+                append(item)
+            i += 1
+            if count is not None and i > count:
+                break
+
+    def _compute_no_pool(self, stream):
+        if self.argtype == 'single':
+            return _compat.map(self.func, stream)
+        elif self.argtype == '*args':
+            return it.starmap(self.func, stream)
+        elif self.argtype == '**kwargs':
+            return _compat.map(lambda x: self.func(**x), stream)
+        elif self.argtype == '*args**kwargs':
+            return it.starmap(
+                lambda args, kwargs: self.func(*args, **kwargs), stream)
+        else:
+            raise ValueError("Invalid argtype: {}".format(self.argtype))
+
+    def _compute_with_pool(self, stream):
+        queue = self.queue
+        pool = self.worker_pool
+        for idx, item in enumerate(stream, 1):
+            if self.argtype == 'single':
+                future = pool.submit(
+                    self.func, item)
+            elif self.argtype == '*args':
+                future = pool.submit(
+                    self.func, *item)
+            elif self.argtype == '**kwargs':
+                future = pool.submit(
+                    self.func, **item)
+            elif self.argtype == '*args**kwargs':
+                future = pool.submit(
+                    self.func, *item[0], **item[1])
+            else:
+                raise ValueError("Invalid argtype: {}".format(self.argtype))
+
+            queue.append(future)
+
+            if idx % 10 == 0:
+                for out in self.flush_queue(len(queue)):
+                    yield out
+
+        for item in self.flush_queue():
+            yield item
 
     def __call__(self, stream):
-        results = builtin_map(self.func, stream)
+
+        # Figure out where to run the computation
+        if self.pool is None:
+            pass
+        elif self.pool == 'thread':
+            self.worker_pool = self.pipeline.thread_pool
+        elif self.pool == 'process':
+            self.worker_pool = self.pipeline.process_pool
+        else:
+            raise ValueError("Invalid pool: {}".format(self.pool))
+
+        # Run computation
+        if self.worker_pool:
+            results = self._compute_with_pool(stream)
+        else:
+            results = self._compute_no_pool(stream)
+
         if self.flatten:
             results = it.chain.from_iterable(results)
+
         return results
 
 
@@ -100,7 +209,11 @@ class wrap(Operation):
 
     For example:
 
-        Pipeline() | Wrap(itertools.chain.from_iterable)
+        Pipeline() | ops.wrap(itertools.chain.from_iterable)
+
+    produces the same result as:
+
+        Pipeline() | ops.flatten()
     """
 
     def __init__(self, func):
@@ -156,7 +269,7 @@ class filter(Operation):
         self.func = func
 
     def __call__(self, stream):
-        return builtin_filter(self.func, stream)
+        return _compat.filter(self.func, stream)
 
 
 class flatten(Operation):
@@ -230,8 +343,9 @@ class windowed_op(Operation):
         self.operation = operation
 
     def __call__(self, stream):
-        for window in tools.slicer(stream, self.count):
-            yield from self.operation(window)
+        windows = tools.slicer(stream, self.count)
+        results = _compat.map(self.operation, windows)
+        return it.chain.from_iterable(results)
 
 
 class windowed_reduce(Operation):
