@@ -1,7 +1,7 @@
 """Pipeline model."""
 
 
-from .exceptions import NotAnOperation
+from .exceptions import NoPool, NotAnOperation
 from .ops import Operation
 
 
@@ -11,8 +11,24 @@ class Pipeline(object):
 
     def __init__(self):
         self.transforms = []
-        self.thread_pool = None
-        self.process_pool = None
+        self._thread_pool = None
+        self._process_pool = None
+
+    @property
+    def thread_pool(self):
+        if self._thread_pool is None:
+            raise NoPool(
+                "An operation requested a thread pool but {!r} did not "
+                "receive one.".format(self))
+        return self._thread_pool
+
+    @property
+    def process_pool(self):
+        if self._process_pool is None:
+            raise NoPool(
+                "An operation requested a process pool but {!r} did not "
+                "receive one.".format(self))
+        return self._process_pool
 
     def __or__(self, other):
 
@@ -29,10 +45,21 @@ class Pipeline(object):
 
     def __call__(self, data, process_pool=None, thread_pool=None):
 
-        """Stream data through the pipeline."""
+        """Stream data through the pipeline.
 
-        self.process_pool = process_pool
-        self.thread_pool = thread_pool
+        Parameters
+        ----------
+        data : object
+            Input data.  Most operations expect an iterable, but some
+            do not.
+        process_pool : None or concurrent.futures.ProcessPoolExecutor
+            A process pool that individual operations can use if needed.
+        thread_pool : None or concurrent.futures.ThreadPoolExecutor
+            A thread pool that individual operations can use if needed.
+        """
+
+        self._process_pool = process_pool
+        self._thread_pool = thread_pool
 
         for trans in self.transforms:
             # Ensure downstream nodes get an ambiguous iterator and not
