@@ -1,27 +1,63 @@
 """Tests for ``tinyflow.ops``."""
 
 
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import operator as op
 
 import pytest
 
-from tinyflow import ops, tools
+from tinyflow import _testing, exceptions, ops, Pipeline, tools
 
 
 def test_default_description():
-    tform = ops.Operation()
+    tform = ops.flatten()
     assert repr(tform) == tform.description
 
 
 def test_description():
-    tform = 'description' >> ops.Operation()
+    tform = 'description' >> ops.flatten()
     assert tform.description == 'description'
 
 
 def test_Operation_abc():
-    o = ops.Operation()
+    """An operation without ``__call__()`` is invalid."""
     with pytest.raises(NotImplementedError):
-        o([])
+        ops.Operation()([])
+
+
+@pytest.mark.parametrize("pool", ['thread', 'process'])
+def test_Operation_no_pool(pool):
+
+    class Op(ops.Operation):
+
+        def __init__(self, pool):
+            self._pool = pool
+
+        def __call__(self, stream):
+            if self._pool == 'process':
+                self.pipeline.process_pool
+            elif self._pool == 'thread':
+                self.pipeline.thread_pool
+            else:
+                raise RuntimeError('uh ...')
+
+    p = Pipeline() | Op(pool)
+    with pytest.raises(exceptions.NoPool):
+        p([])
+
+
+def test_Operation_no_pipeline():
+
+    class Op(ops.Operation):
+
+        def __init__(self):
+            self.pipeline
+
+        def __call__(self, stream):
+            pass
+
+    with pytest.raises(exceptions.NoPipeline):
+        Op()
 
 
 @pytest.mark.parametrize("operation,input_data,expected", [
@@ -106,5 +142,57 @@ def test_reduce_by_key_initial_copier(kwargs):
     assert expected == actual
 
 
-# def test_parallel_map():
-#
+def _parametrize_test_map_star_args(pools, args):
+
+    """Prepare parametrized arguments for ``test_map_star_args()`` to make
+    sure everything is tested across all pool types.
+
+    Takes args like:
+
+        (_testing.add2, '*args', [(1, 2), (3, 4)], [3, 7])
+
+    and pools like:
+
+        [(ProcessPoolExecutor, 'process'), (ThreadPoolExecutor, 'thread')]
+
+    and produces:
+
+        (_testing.add2, '*args', [(1, 2), (3, 4)], [3, 7], ProcessPoolExecutor, 'process')
+        (_testing.add2, '*args', [(1, 2), (3, 4)], [3, 7], ThreadPoolExecutor, 'thread')
+    """
+
+    for item in args:
+        for p in pools:
+            yield tuple(list(item) + list(p))
+
+
+@pytest.mark.parametrize("func,argtype,data,expected,pool_class,pool_name",
+    list(_parametrize_test_map_star_args(
+        pools=[(ProcessPoolExecutor, 'process'), (ThreadPoolExecutor, 'thread')],
+        args=[
+            (_testing.add2, '*args', [(1, 2), (3, 4)], [3, 7]),
+            (_testing.add2, '**kwargs', [{'a': 1, 'b': 2}, {'a': 3, 'b': 4}], [3, 7]),
+            (_testing.add4, '*args**kwargs', [((1, 2), {'c': 3, 'd': 4}), ((5, 6), {'c': 7, 'd': 8})], [10, 26])
+        ])))
+def test_map_arg_types_and_pools(
+        func, argtype, data, expected, pool_class, pool_name):
+
+    """Every argument type should work with every pool type."""
+
+    p = Pipeline() | ops.map(func, argtype=argtype, pool=pool_name)
+    with pool_class(4) as pool:
+        kwargs = {'{}_pool'.format(pool_name): pool}
+        actual = p(data, **kwargs)
+        # Cast both outputs to list and sort actual since it may be out of
+        # order after mapping in parallel.
+        assert list(expected) == sorted(actual)
+
+
+def test_map_exceptions():
+    # Bad argtype
+    with pytest.raises(ValueError):
+        ops.map(lambda x: x, argtype=None)
+    # Bad pool
+    p = Pipeline() | ops.map(lambda x: x, pool='trash')
+    with pytest.raises(ValueError):
+        p([])
