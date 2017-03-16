@@ -6,6 +6,7 @@
 
 import itertools as it
 import os
+import sys
 
 from setuptools import find_packages
 from setuptools import setup
@@ -42,6 +43,7 @@ with open(os.path.join('tinyflow', '__init__.py')) as f:
     email = dunders['__email__']
     source = dunders['__source__']
 
+
 extras_require = {
     'dev': [
         'pytest>=3',
@@ -49,6 +51,8 @@ extras_require = {
         'coveralls',
     ],
 }
+if sys.version_info.major == 2:
+    extras_require['dev'].append('futures')
 extras_require['all'] = list(it.chain.from_iterable(extras_require.values()))
 
 
