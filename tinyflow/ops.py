@@ -7,8 +7,8 @@ import copy
 from functools import reduce
 import itertools as it
 
-from tinyflow import _compat, tools
-from tinyflow.exceptions import NoPipeline
+from . import _compat, tools
+from .exceptions import NoPipeline
 
 
 __all__ = [
@@ -57,7 +57,7 @@ class Operation(object):
         self._pipeline = pipeline
 
     @abc.abstractmethod
-    def __call__(self, stream):
+    def __call__(self, stream):  # pragma: no cover
 
         """Given a stream of data, apply the transform.
 
@@ -181,6 +181,7 @@ class map(Operation):
 
     def __call__(self, stream):
 
+        # Figure out where to run the computation
         if self.pool is None:
             pass
         elif self.pool == 'thread':
@@ -190,6 +191,7 @@ class map(Operation):
         else:
             raise ValueError("Invalid pool: {}".format(self.pool))
 
+        # Run computation
         if self.worker_pool:
             results = self._compute_with_pool(stream)
         else:

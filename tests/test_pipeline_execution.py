@@ -36,7 +36,7 @@ def test_operation_parent_pipeline():
 
     p = Pipeline()
 
-    class O(ops.Operation):
+    class Op(ops.Operation):
 
         def __init__(self, check_pipeline=False):
             # Just referencing pipeline here will trigger an exception
@@ -47,8 +47,8 @@ def test_operation_parent_pipeline():
             return self.pipeline is p
 
     with pytest.raises(exceptions.NoPipeline):
-        O(check_pipeline=True)
+        Op(check_pipeline=True)
 
-    p |= O()
+    p |= Op()
 
     assert p([None]) is True
