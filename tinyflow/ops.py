@@ -15,7 +15,8 @@ from .exceptions import NoPipeline
 __all__ = [
     'Operation', 'map', 'wrap', 'sort', 'filter',
     'flatten' 'take', 'drop', 'windowed_op',
-    'windowed_reduce', 'counter', 'reduce_by_key']
+    'windowed_reduce', 'counter', 'reduce_by_key',
+    'chunk', 'cat']
 
 
 class Operation(object):

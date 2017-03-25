@@ -205,3 +205,20 @@ def test_cat():
     with open('LICENSE.txt') as f:
         for e, a in zip(f, ops.cat('LICENSE.txt')):
             assert e == a
+
+
+def test_module_all():
+
+    """Make sure all the operations are registered in
+    ``tinyflow.ops.__all__``.
+
+    This test may need to be modified if any objects that don't subclass
+    ``tinyflow.ops.Operation()`` are added to this module.
+    """
+
+    for item in ops.__all__:
+        assert issubclass(getattr(ops, item), ops.Operation)
+
+    for obj in dir(ops):
+        if issubclass(obj, ops.Operation):
+            assert obj.__class__.__name__ in ops.__all__
