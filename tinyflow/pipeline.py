@@ -7,28 +7,43 @@ from .ops import Operation
 
 class Pipeline(object):
 
-    """A ``tinyflow`` pipeline model."""
+    """A ``tinyflow`` pipeline model.  Subclass to attach your own custom
+    ``__init__()`` init.
 
-    def __init__(self):
-        self.transforms = []
-        self._thread_pool = None
-        self._process_pool = None
+    Attributes
+    ----------
+    transforms : tuple
+        Instances of ``tinyflow.ops.Operation()`` that will be used to process
+        data.
+    thread_pool : concurrent.futures.ThreadPoolExecutor or None
+        Will be ``None`` unless a thread pool was passed to
+        ``Pipeline.__call__()``.
+    process_pool : concurrent.futures.ProcessPoolExecutor or None
+        Will be ``None`` unless a process pool was passed to
+        ``Pipeline.__call__()``.
+    """
+
+    @property
+    def transforms(self):
+        return getattr(self, '_transforms', tuple())
 
     @property
     def thread_pool(self):
-        if self._thread_pool is None:
+        pool = getattr(self, '_thread_pool', None)
+        if pool is None:
             raise NoPool(
                 "An operation requested a thread pool but {!r} did not "
                 "receive one.".format(self))
-        return self._thread_pool
+        return pool
 
     @property
     def process_pool(self):
-        if self._process_pool is None:
+        pool = getattr(self, '_process_pool', None)
+        if pool is None:
             raise NoPool(
                 "An operation requested a process pool but {!r} did not "
                 "receive one.".format(self))
-        return self._process_pool
+        return pool
 
     def __or__(self, other):
 
@@ -38,7 +53,10 @@ class Pipeline(object):
             raise NotAnOperation(
                 "Expected an 'Operation()', not: {}".format(other))
         other.pipeline = self
-        self.transforms.append(other)
+
+        # Enforce immutability when calling 'Pipeline.transform'
+        self._transforms = tuple(list(self.transforms) + [other])
+
         return self
 
     __ior__ = __or__
