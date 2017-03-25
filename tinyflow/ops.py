@@ -24,7 +24,7 @@ class Operation(object):
     @property
     def description(self):
 
-        """A transform description can be added like:
+        """A operaton description can be added like:
 
             Pipeline() | "description" >> Operation()
         """
@@ -59,17 +59,17 @@ class Operation(object):
     @abc.abstractmethod
     def __call__(self, stream):  # pragma: no cover
 
-        """Given a stream of data, apply the transform.
+        """Given a stream of data, apply the operaton.
 
         Parameters
         ----------
         stream : iter
-            Apply transform to the stream of data.
+            Apply an operaton to the stream of data.
 
         Yields
         ------
         object
-            Operationed objects.
+            Processed objects.
         """
 
         raise NotImplementedError
@@ -205,7 +205,7 @@ class map(Operation):
 
 class wrap(Operation):
 
-    """Wrap the data stream in an arbitrary transform.
+    """Wrap the data stream in an arbitrary operaton.
 
     For example:
 

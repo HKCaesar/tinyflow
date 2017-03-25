@@ -12,7 +12,7 @@ class Pipeline(object):
 
     Attributes
     ----------
-    transforms : tuple
+    operations : tuple
         Instances of ``tinyflow.ops.Operation()`` that will be used to process
         data.
     thread_pool : concurrent.futures.ThreadPoolExecutor or None
@@ -24,8 +24,8 @@ class Pipeline(object):
     """
 
     @property
-    def transforms(self):
-        return getattr(self, '_transforms', tuple())
+    def operations(self):
+        return getattr(self, '_operations', tuple())
 
     @property
     def thread_pool(self):
@@ -47,15 +47,15 @@ class Pipeline(object):
 
     def __or__(self, other):
 
-        """Add a transform to the pipeline."""
+        """Add a ``tinyflow.ops.Operation()`` to the pipeline."""
 
         if not isinstance(other, Operation):
             raise NotAnOperation(
                 "Expected an 'Operation()', not: {}".format(other))
         other.pipeline = self
 
-        # Enforce immutability when calling 'Pipeline.transform'
-        self._transforms = tuple(list(self.transforms) + [other])
+        # Enforce immutability when calling 'Pipeline.operations'
+        self._operations = tuple(list(self.operations) + [other])
 
         return self
 
@@ -79,9 +79,9 @@ class Pipeline(object):
         self._process_pool = process_pool
         self._thread_pool = thread_pool
 
-        for trans in self.transforms:
+        for op in self.operations:
             # Ensure downstream nodes get an ambiguous iterator and not
             # something like a list that they get hooked on abusing.
-            data = trans(data)
+            data = op(data)
 
         return data
