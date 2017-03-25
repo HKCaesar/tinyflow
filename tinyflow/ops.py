@@ -257,13 +257,13 @@ class filter(Operation):
 
     """Filter the data stream.  Keeps elements that evaluate as ``True``."""
 
-    def __init__(self, func):
+    def __init__(self, func=None):
 
         """
         Parameters
         ----------
-        func : function
-            See ``filtered()``'s documentation.
+        func : function or None, optional
+            See ``filter()``'s documentation.
         """
 
         self.func = func

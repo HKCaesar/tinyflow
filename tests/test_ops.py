@@ -69,6 +69,7 @@ def test_Operation_no_pipeline():
     (ops.map(lambda x: x.upper(), flatten=True), ['w1', 'w2'], ['W', '1', 'W', '2']),
     (ops.flatten(), ((1, 2), (3, 4)), (1, 2, 3, 4)),
     (ops.filter(bool), (0, 1, 2, None, 4), (1, 2, 4)),
+    (ops.filter(), (0, 1, 2, None, 4), (1, 2, 4)),
     (ops.wrap(reversed), (1, 2, 3), (3, 2, 1)),
     (ops.windowed_reduce(2, op.iadd), (1, 2, 3, 4, 5), (3, 7, 5)),
     (ops.windowed_op(2, reversed), (1, 2, 3, 4, 5), (2, 1, 4, 3, 5)),
