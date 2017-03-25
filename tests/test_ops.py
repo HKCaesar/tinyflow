@@ -199,3 +199,9 @@ def test_map_exceptions():
     p = Pipeline() | ops.map(lambda x: x, pool='trash')
     with pytest.raises(ValueError):
         p([])
+
+
+def test_cat():
+    with open('LICENSE.txt') as f:
+        for e, a in zip(f, ops.cat('LICENSE.txt')):
+            assert e == a

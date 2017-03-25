@@ -2,6 +2,7 @@
 
 
 import abc
+import codecs
 from collections import Counter, deque
 import copy
 from functools import reduce
@@ -512,3 +513,33 @@ class chunk(Operation):
                 yield v
             else:
                 raise StopIteration
+
+
+class cat(Operation):
+
+    """Emit lines from a text file.  By default file must exist on disk, but
+    a custom ``opener`` could be used to read data from anywhere.
+    """
+
+    def __init__(self, opener=codecs.open, **kwargs):
+
+        """
+        Parameters
+        ----------
+        opener : func, optional
+            Function to use for opening each file.
+        kwargs : **kwargs, optional
+            Additional keyword arguments for ``opener(**kwargs)``.
+        """
+
+        self.opener = opener
+        self.kwargs = kwargs
+
+    def __call__(self, stream):
+        # Dots aren't free.
+        opener = self.opener
+        kwargs = self.kwargs
+        for url in stream:
+            with opener(url, **kwargs) as f:
+                for line in f:
+                    yield line
