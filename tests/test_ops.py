@@ -75,6 +75,8 @@ def test_Operation_no_pipeline():
     (ops.windowed_op(2, reversed), (1, 2, 3, 4, 5), (2, 1, 4, 3, 5)),
     (ops.sort(), (2, 3, 1), (1, 2, 3)),
     (ops.sort(reverse=True), (2, 3, 1), (3, 2, 1)),
+    (ops.chunk(2), (1, 2, 3, 4), ((1, 2), (3, 4))),
+    (ops.chunk(2), (1, 2, 3, 4, 5), ((1, 2), (3, 4), (5,))),
     # Complex sorting with a key function and reversed.  Data is a series
     # of tuples.  Sort on the first element of each tuple.
     (

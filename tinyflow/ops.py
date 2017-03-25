@@ -486,3 +486,29 @@ class reduce_by_key(Operation):
 
         while partitioned:
             yield partitioned.popitem()
+
+
+class chunk(Operation):
+
+    """Group elements in the stream into tuples, each with at most N items."""
+
+    def __init__(self, size):
+
+        """
+        Parameters
+        ----------
+        size : int
+            Maximum number of items to group together.
+        """
+        self.size = size
+
+    def __call__(self, stream):
+
+        # Dots aren't free.
+        size = self.size
+        while True:
+            v = tuple(it.islice(stream, size))
+            if v:
+                yield v
+            else:
+                raise StopIteration
