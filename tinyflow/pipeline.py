@@ -45,6 +45,16 @@ class Pipeline(object):
                 "receive one.".format(self))
         return pool
 
+    def close(self):
+        """Override if to teardown a pipeline in ``Pipeline.__exit__()``."""
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     def __or__(self, other):
 
         """Add a ``tinyflow.ops.Operation()`` to the pipeline."""
