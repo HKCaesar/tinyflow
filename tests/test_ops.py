@@ -216,9 +216,12 @@ def test_module_all():
     ``tinyflow.ops.Operation()`` are added to this module.
     """
 
+    # Ensure everything in '__all__' is present
     for item in ops.__all__:
         assert issubclass(getattr(ops, item), ops.Operation)
 
+    # Ensure all 'Operation()' subclasses are listed in '__all__'.
     for obj in dir(ops):
-        if issubclass(obj, ops.Operation):
+        # Not every object has '.__bases__'
+        if ops.Operation in getattr(obj, '__bases__', []):
             assert obj.__class__.__name__ in ops.__all__
