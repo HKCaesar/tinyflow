@@ -203,7 +203,7 @@ def test_map_exceptions():
 
 def test_cat():
     with open('LICENSE.txt') as f:
-        for e, a in zip(f, ops.cat('LICENSE.txt')):
+        for e, a in zip(f, ops.cat()(['LICENSE.txt'])):
             assert e == a
 
 
