@@ -69,11 +69,14 @@ def test_Operation_no_pipeline():
     (ops.map(lambda x: x.upper(), flatten=True), ['w1', 'w2'], ['W', '1', 'W', '2']),
     (ops.flatten(), ((1, 2), (3, 4)), (1, 2, 3, 4)),
     (ops.filter(bool), (0, 1, 2, None, 4), (1, 2, 4)),
+    (ops.filter(), (0, 1, 2, None, 4), (1, 2, 4)),
     (ops.wrap(reversed), (1, 2, 3), (3, 2, 1)),
     (ops.windowed_reduce(2, op.iadd), (1, 2, 3, 4, 5), (3, 7, 5)),
     (ops.windowed_op(2, reversed), (1, 2, 3, 4, 5), (2, 1, 4, 3, 5)),
     (ops.sort(), (2, 3, 1), (1, 2, 3)),
     (ops.sort(reverse=True), (2, 3, 1), (3, 2, 1)),
+    (ops.chunk(2), (1, 2, 3, 4), ((1, 2), (3, 4))),
+    (ops.chunk(2), (1, 2, 3, 4, 5), ((1, 2), (3, 4), (5,))),
     # Complex sorting with a key function and reversed.  Data is a series
     # of tuples.  Sort on the first element of each tuple.
     (
@@ -196,3 +199,29 @@ def test_map_exceptions():
     p = Pipeline() | ops.map(lambda x: x, pool='trash')
     with pytest.raises(ValueError):
         p([])
+
+
+def test_cat():
+    with open('LICENSE.txt') as f:
+        for e, a in zip(f, ops.cat()(['LICENSE.txt'])):
+            assert e == a
+
+
+def test_module_all():
+
+    """Make sure all the operations are registered in
+    ``tinyflow.ops.__all__``.
+
+    This test may need to be modified if any objects that don't subclass
+    ``tinyflow.ops.Operation()`` are added to this module.
+    """
+
+    # Ensure everything in '__all__' is present
+    for item in ops.__all__:
+        assert issubclass(getattr(ops, item), ops.Operation)
+
+    # Ensure all 'Operation()' subclasses are listed in '__all__'.
+    for obj in dir(ops):
+        # Not every object has '.__bases__'
+        if ops.Operation in getattr(obj, '__bases__', []):
+            assert obj.__class__.__name__ in ops.__all__

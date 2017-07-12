@@ -2,6 +2,7 @@
 
 
 import abc
+import codecs
 from collections import Counter, deque
 import copy
 from functools import reduce
@@ -13,8 +14,9 @@ from .exceptions import NoPipeline
 
 __all__ = [
     'Operation', 'map', 'wrap', 'sort', 'filter',
-    'flatten' 'take', 'drop', 'windowed_op',
-    'windowed_reduce', 'counter', 'reduce_by_key']
+    'flatten', 'take', 'drop', 'windowed_op',
+    'windowed_reduce', 'counter', 'reduce_by_key',
+    'chunk', 'cat']
 
 
 class Operation(object):
@@ -24,7 +26,7 @@ class Operation(object):
     @property
     def description(self):
 
-        """A transform description can be added like:
+        """A operaton description can be added like:
 
             Pipeline() | "description" >> Operation()
         """
@@ -59,17 +61,17 @@ class Operation(object):
     @abc.abstractmethod
     def __call__(self, stream):  # pragma: no cover
 
-        """Given a stream of data, apply the transform.
+        """Given a stream of data, apply the operaton.
 
         Parameters
         ----------
         stream : iter
-            Apply transform to the stream of data.
+            Apply an operaton to the stream of data.
 
         Yields
         ------
         object
-            Operationed objects.
+            Processed objects.
         """
 
         raise NotImplementedError
@@ -205,7 +207,7 @@ class map(Operation):
 
 class wrap(Operation):
 
-    """Wrap the data stream in an arbitrary transform.
+    """Wrap the data stream in an arbitrary operaton.
 
     For example:
 
@@ -257,13 +259,13 @@ class filter(Operation):
 
     """Filter the data stream.  Keeps elements that evaluate as ``True``."""
 
-    def __init__(self, func):
+    def __init__(self, func=None):
 
         """
         Parameters
         ----------
-        func : function
-            See ``filtered()``'s documentation.
+        func : function or None, optional
+            See ``filter()``'s documentation.
         """
 
         self.func = func
@@ -486,3 +488,61 @@ class reduce_by_key(Operation):
 
         while partitioned:
             yield partitioned.popitem()
+
+
+class chunk(Operation):
+
+    """Group elements in the stream into tuples, each with at most N items."""
+
+    def __init__(self, size):
+
+        """
+        Parameters
+        ----------
+        size : int
+            Maximum number of items to group together.
+        """
+        self.size = size
+
+    def __call__(self, stream):
+
+        stream = iter(stream)
+
+        # Dots aren't free.
+        size = self.size
+        while True:
+            v = tuple(it.islice(stream, size))
+            if v:
+                yield v
+            else:
+                return
+
+
+class cat(Operation):
+
+    """Emit lines from a text file.  By default file must exist on disk, but
+    a custom ``opener`` could be used to read data from anywhere.
+    """
+
+    def __init__(self, opener=codecs.open, **kwargs):
+
+        """
+        Parameters
+        ----------
+        opener : func, optional
+            Function to use for opening each file.
+        kwargs : **kwargs, optional
+            Additional keyword arguments for ``opener(**kwargs)``.
+        """
+
+        self.opener = opener
+        self.kwargs = kwargs
+
+    def __call__(self, stream):
+        # Dots aren't free.
+        opener = self.opener
+        kwargs = self.kwargs
+        for url in stream:
+            with opener(url, **kwargs) as f:
+                for line in f:
+                    yield line

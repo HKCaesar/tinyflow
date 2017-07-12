@@ -7,38 +7,66 @@ from .ops import Operation
 
 class Pipeline(object):
 
-    """A ``tinyflow`` pipeline model."""
+    """A ``tinyflow`` pipeline model.  Subclass to attach your own custom
+    ``__init__()`` init.
 
-    def __init__(self):
-        self.transforms = []
-        self._thread_pool = None
-        self._process_pool = None
+    Attributes
+    ----------
+    operations : tuple
+        Instances of ``tinyflow.ops.Operation()`` that will be used to process
+        data.
+    thread_pool : concurrent.futures.ThreadPoolExecutor or None
+        Will be ``None`` unless a thread pool was passed to
+        ``Pipeline.__call__()``.
+    process_pool : concurrent.futures.ProcessPoolExecutor or None
+        Will be ``None`` unless a process pool was passed to
+        ``Pipeline.__call__()``.
+    """
+
+    @property
+    def operations(self):
+        return getattr(self, '_operations', tuple())
 
     @property
     def thread_pool(self):
-        if self._thread_pool is None:
+        pool = getattr(self, '_thread_pool', None)
+        if pool is None:
             raise NoPool(
                 "An operation requested a thread pool but {!r} did not "
                 "receive one.".format(self))
-        return self._thread_pool
+        return pool
 
     @property
     def process_pool(self):
-        if self._process_pool is None:
+        pool = getattr(self, '_process_pool', None)
+        if pool is None:
             raise NoPool(
                 "An operation requested a process pool but {!r} did not "
                 "receive one.".format(self))
-        return self._process_pool
+        return pool
+
+    def close(self):
+        """Override if to teardown a pipeline in ``Pipeline.__exit__()``."""
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def __or__(self, other):
 
-        """Add a transform to the pipeline."""
+        """Add a ``tinyflow.ops.Operation()`` to the pipeline."""
 
         if not isinstance(other, Operation):
             raise NotAnOperation(
                 "Expected an 'Operation()', not: {}".format(other))
         other.pipeline = self
-        self.transforms.append(other)
+
+        # Enforce immutability when calling 'Pipeline.operations'
+        self._operations = tuple(list(self.operations) + [other])
+
         return self
 
     __ior__ = __or__
@@ -61,9 +89,9 @@ class Pipeline(object):
         self._process_pool = process_pool
         self._thread_pool = thread_pool
 
-        for trans in self.transforms:
+        for op in self.operations:
             # Ensure downstream nodes get an ambiguous iterator and not
             # something like a list that they get hooked on abusing.
-            data = trans(data)
+            data = op(data)
 
         return data
