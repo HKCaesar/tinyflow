@@ -506,6 +506,8 @@ class chunk(Operation):
 
     def __call__(self, stream):
 
+        stream = iter(stream)
+
         # Dots aren't free.
         size = self.size
         while True:
@@ -513,7 +515,7 @@ class chunk(Operation):
             if v:
                 yield v
             else:
-                raise StopIteration
+                return
 
 
 class cat(Operation):
