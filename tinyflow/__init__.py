@@ -1,10 +1,10 @@
 """Experiments in data flow programming."""
 
 
-from .pipeline import Pipeline
+from .pipeline import MapPipeline, Pipeline
 
 
-__all__ = ['Pipeline', 'ops']
+__all__ = ['MapPipeline', 'Pipeline', 'ops']
 
 
 __version__ = '0.1'

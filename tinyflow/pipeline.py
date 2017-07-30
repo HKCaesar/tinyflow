@@ -1,14 +1,81 @@
-"""Pipeline model."""
+"""Pipeline model.
+
+A word count example using a threadpool, a sub-pipeline, and a mapped
+pipeline to count words in multiple files across multiple threads while
+consuming a very small amount of memory:
+
+    from concurrent.futures import ThreadPoolExecutor
+    import operator as op
+
+    from tinyflow import ops, MapPipeline, Pipeline
+
+
+    # Compute word count for a single file
+    wordcount = MapPipeline() \
+        | ops.cat() \
+        | ops.methodcaller('lower') \
+        | ops.methodcaller('split') \
+        | ops.filter() \
+        | ops.flatten() \
+        | ops.counter()
+
+    # Summarize stats across all files
+    aggregate_wordcount = Pipeline() \
+        | ops.flatten() \
+        | ops.reduce_by_key(op.iadd, op.itemgetter(0), op.itemgetter(1))
+
+    # Distributes the process across threads, aggregates, sorts, and
+    # determines the 10 most frequent words.
+    pipeline = Pipeline() \
+       | ops.map(wordcount, pool='thread') \
+       | aggregate_wordcount \
+       | ops.sort(op.itemgetter(1), reverse=True) \
+       | ops.take(10)
+
+    # Execute the pipeline and give it access to 4 threads.
+    infiles = ('LICENSE.txt' for _ in range(2))
+    with ThreadPoolExecutor(4) as threads:
+        for item in pipeline(infiles, thread_pool=threads):
+            print(item)
+"""
 
 
 from .exceptions import NoPool, NotAnOperation
 from .ops import Operation
 
 
+__all__ = ['MapPipeline', 'Pipeline']
+
+
 class Pipeline(object):
 
     """A ``tinyflow`` pipeline model.  Subclass to attach your own custom
     ``__init__()`` init.
+
+        from tinyflow import ops, Pipeline
+
+
+        pipeline = Pipeline() \
+            | ops.map(lambda x: x ** 2)
+
+        for item in pipeline(range(10)):
+            pass
+
+    Pipelines can also be treated as operations:
+
+        from tinyflow import ops, Pipeline
+
+
+        square_pipeline = Pipeline() \
+            | ops.map(lambda x: x ** 2)
+
+        pipeline = Pipeline() \
+            | ops.map(lambda x: x - 1) \
+            | square_pipeline
+
+        for item in pipeline(range(10)):
+            pass
+
 
     Attributes
     ----------
@@ -59,7 +126,7 @@ class Pipeline(object):
 
         """Add a ``tinyflow.ops.Operation()`` to the pipeline."""
 
-        if not isinstance(other, Operation):
+        if not isinstance(other, (Operation, Pipeline)):
             raise NotAnOperation(
                 "Expected an 'Operation()', not: {}".format(other))
         other.pipeline = self
@@ -86,12 +153,46 @@ class Pipeline(object):
             A thread pool that individual operations can use if needed.
         """
 
+        data = iter(data)
+
         self._process_pool = process_pool
         self._thread_pool = thread_pool
 
         for op in self.operations:
             # Ensure downstream nodes get an ambiguous iterator and not
             # something like a list that they get hooked on abusing.
-            data = op(data)
+            data = iter(op(data))
 
         return data
+
+
+class MapPipeline(Pipeline):
+
+    """Like ``Pipeline()`` except ``__call__()`` expects a single object
+    instead of an iterable.  This is to enable mapping entire pipelines
+    across a stream controlled by a different pipeline.  For instance,
+    this produces a word count derived from multiple files across multiple
+    threads:
+
+        from tinyflow import MapPipeline, ops, Pipeline
+
+        wordcount = MapPipeline() \
+            | ops.cat() \
+            | ops.methodcaller('lower') \
+            | ops.methodcaller('split') \
+            | ops.filter() \
+            | ops.flatten() \
+            | ops.counter()
+
+        pipeline = Pipeline() \
+            | ops.map(wordcount, pool='thread') \
+            | ops.flatten() \
+            | ops.reduce_by_key(op.iadd, op.itemgetter(0), op.itemgetter(1)) \
+
+        for word, count in pipeline(<infiles>):
+            pass
+    """
+
+    def __call__(self, data, *args, **kwargs):
+        return iter(super(MapPipeline, self).__call__(
+            iter([data]), *args, **kwargs))

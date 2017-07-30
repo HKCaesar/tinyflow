@@ -50,6 +50,51 @@ Using only Python's builtins:
         results = dict(count.most_common(10))
 
 
+Sub-pipelines, Processes, and Threads
+=====================================
+
+Pipelines can be treated as operations and/or mapped across elements in a
+stream.  This word count example breaks the workflow into multiple pipelines
+to process multiple files across multiple threads to ultimately determine the
+10 most frequent words.
+
+.. code-block:: python
+
+    from concurrent.futures import ThreadPoolExecutor
+    import operator as op
+
+    from tinyflow import ops, MapPipeline, Pipeline
+
+
+    # Compute word count for a single file
+    wordcount = MapPipeline() \
+        | ops.cat() \
+        | ops.methodcaller('lower') \
+        | ops.methodcaller('split') \
+        | ops.filter() \
+        | ops.flatten() \
+        | ops.counter()
+
+    # Summarize stats across all files
+    aggregate_wordcount = Pipeline() \
+        | ops.flatten() \
+        | ops.reduce_by_key(op.iadd, op.itemgetter(0), op.itemgetter(1))
+
+    # Distributes the process across threads, aggregates, sorts, and
+    # determines the 10 most frequent words.
+    pipeline = Pipeline() \
+       | ops.map(wordcount, pool='thread') \
+       | aggregate_wordcount \
+       | ops.sort(op.itemgetter(1), reverse=True) \
+       | ops.take(10)
+
+    # Execute the pipeline and give it access to 4 threads.
+    infiles = ('LICENSE.txt' for _ in range(2))
+    with ThreadPoolExecutor(4) as threads:
+        for item in pipeline(infiles, thread_pool=threads):
+            print(item)
+
+
 Developing
 ==========
 

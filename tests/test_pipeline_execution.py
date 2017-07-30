@@ -6,7 +6,7 @@ import itertools as it
 
 import pytest
 
-from tinyflow import exceptions, ops, Pipeline
+from tinyflow import exceptions, MapPipeline, ops, Pipeline
 
 
 def test_wordcount():
@@ -52,3 +52,31 @@ def test_operation_parent_pipeline():
     p |= Op()
 
     assert next(p([None])) is True
+
+
+def test_MapPipeline_execution():
+
+    square = MapPipeline() \
+        | ops.map(lambda x: x ** 2)
+
+    pipeline = Pipeline() \
+        | ops.map(square) \
+        | ops.flatten()
+
+    data = tuple(range(5))
+    assert tuple(pipeline(data)) == tuple(map(lambda x: x ** 2, data))
+
+
+def test_subpipeline():
+
+    square = Pipeline() \
+        | ops.map(lambda x: x ** 2)
+
+    pipeline = Pipeline() \
+        | ops.map(lambda x: x - 1) \
+        | square
+
+    data = tuple(range(5))
+    expected = tuple(map(lambda x: (x - 1) ** 2, data))
+    actual = tuple(pipeline(data))
+    assert expected == actual
