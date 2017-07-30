@@ -44,11 +44,11 @@ def test_operation_parent_pipeline():
                 self.pipeline
 
         def __call__(self, stream):
-            return self.pipeline is p
+            yield self.pipeline is p
 
     with pytest.raises(exceptions.NoPipeline):
         Op(check_pipeline=True)
 
     p |= Op()
 
-    assert p([None]) is True
+    assert next(p([None])) is True
