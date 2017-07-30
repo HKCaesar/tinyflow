@@ -260,19 +260,25 @@ class filter(Operation):
 
     """Filter the data stream.  Keeps elements that evaluate as ``True``."""
 
-    def __init__(self, func=None):
+    def __init__(self, func=None, filterfalse=False):
 
         """
         Parameters
         ----------
         func : function or None, optional
             See ``filter()``'s documentation.
+        filterfalse : bool, optional
+            Use ``itertools.filterfalse()`` instead of ``filter()``.
         """
 
         self.func = func
+        self.filterfalse = filterfalse
 
     def __call__(self, stream):
-        return _compat.filter(self.func, stream)
+        if self.filterfalse:
+            return _compat.filterfalse(self.func, stream)
+        else:
+            return _compat.filter(self.func, stream)
 
 
 class flatten(Operation):

@@ -2,7 +2,9 @@
 
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import inspect
 import operator as op
+import os
 
 import pytest
 
@@ -82,6 +84,9 @@ def test_Operation_no_pipeline():
     (ops.filter(),
         (0, 1, 2, None, 4),
         (1, 2, 4)),
+    (ops.filter(filterfalse=True),
+        (0, 1, 2, None, 4),
+        (0, None)),
     (ops.filter(bool),
         (0, 1, 2, None, 4),
         (1, 2, 4)),
