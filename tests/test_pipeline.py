@@ -22,6 +22,3 @@ def test_Pipeline_subclass_close():
     with P() as p:
         assert not p.closed
     assert p.closed
-
-
-test_Pipeline_subclass_close()

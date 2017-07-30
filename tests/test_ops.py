@@ -264,4 +264,6 @@ def test_module_all():
 
     # Ensure all 'Operation()' subclasses are listed in '__all__'.
     for cls in ops.Operation.__subclasses__():
+        if os.path.join('tinyflow/tests') in inspect.getfile(cls):
+            continue
         assert cls.__name__ in ops.__all__
