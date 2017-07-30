@@ -7,6 +7,7 @@ from collections import Counter, deque
 import copy
 from functools import reduce
 import itertools as it
+import operator as op
 
 from . import _compat, tools
 from .exceptions import NoPipeline
@@ -16,7 +17,7 @@ __all__ = [
     'Operation', 'map', 'wrap', 'sort', 'filter',
     'flatten', 'take', 'drop', 'windowed_op',
     'windowed_reduce', 'counter', 'reduce_by_key',
-    'chunk', 'cat']
+    'chunk', 'cat', 'methodcaller', 'itemgetter']
 
 
 class Operation(object):
@@ -546,3 +547,41 @@ class cat(Operation):
             with opener(url, **kwargs) as f:
                 for line in f:
                     yield line
+
+
+class methodcaller(Operation):
+
+    """Maps ``operator.methodcaller()`` across the stream.  Analogous to:
+
+        tinyflow.ops.map(operator.methodcaller(<name>, *args, **kwargs))
+    """
+
+    def __init__(self, name, *args, **kwargs):
+
+        """See ``operator.methodcaller()``."""
+
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, stream):
+        return _compat.map(
+            op.methodcaller(self.name, *self.args, **self.kwargs), stream)
+
+
+class itemgetter(Operation):
+
+    """Wraps ``operator.itemgetter()``.  Analogous to:
+
+        tinyflow.ops.map(operator.itemgetter(<item>))
+    """
+
+    def __init__(self, item, *items):
+
+        """See ``operator.itemgetter()``."""
+
+        self.item = item
+        self.items = items
+
+    def __call__(self, stream):
+        return _compat.map(op.itemgetter(self.item, *self.items), stream)
