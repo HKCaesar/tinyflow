@@ -249,7 +249,5 @@ def test_module_all():
         assert issubclass(getattr(ops, item), ops.Operation)
 
     # Ensure all 'Operation()' subclasses are listed in '__all__'.
-    for obj in dir(ops):
-        # Not every object has '.__bases__'
-        if ops.Operation in getattr(obj, '__bases__', []):
-            assert obj.__class__.__name__ in ops.__all__
+    for cls in ops.Operation.__subclasses__():
+        assert cls.__name__ in ops.__all__
